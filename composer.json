@@ -1,0 +1,20 @@
+{
+    "name": "spiral/autocomplete",
+    "description": "Autocomplete wrapper for Spiral",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Yauheni Yasinau",
+            "email": "iasinov@gmail.com"
+        }
+    ],
+    "require": {
+        "spiral/framework": "*",
+        "spiral/toolkit": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Spiral\\": "source/"
+        }
+    }
+}
