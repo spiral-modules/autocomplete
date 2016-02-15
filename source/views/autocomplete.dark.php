@@ -18,6 +18,8 @@
     }
     ?>
     <block:input-body>
-        <input type="text" data-name="${name}" data-url="${url}" class="js-sf-autocomplete" node:attributes/>
+        <label class="item-form">
+            <input type="text" data-name="${name}" data-url="${url}" class="js-sf-autocomplete" node:attributes/>
+        </label>
     </block:input-body>
 </block:body>
