@@ -74,6 +74,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	//todo not use webpack's style loader here. just compile, minify and add to the page by our script
 	__webpack_require__(27); //resolved by webpack's "externals"
 	
+	
 	_sf2.default.instancesController.registerInstanceType(_sfAutocomplete2.default, "js-sf-autocomplete");
 	module.exports = _sfAutocomplete2.default; // ES6 default export will not expose us as global
 
@@ -90,6 +91,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	"use strict";
 	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.default = undefined;
+	
 	var _getOwnPropertyNames = __webpack_require__(4);
 	
 	var _getOwnPropertyNames2 = _interopRequireDefault(_getOwnPropertyNames);
@@ -102,11 +108,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _create2 = _interopRequireDefault(_create);
 	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.default = undefined;
-	
 	var _sf = __webpack_require__(2);
 	
 	var _sf2 = _interopRequireDefault(_sf);
@@ -114,6 +115,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	//resolved by webpack's "externals"
+	
+	var resolveKeyPath = function resolveKeyPath(path, obj, safe) {
+	    //todo move to sf.js
+	    return path.split('.').reduce(function (prev, curr) {
+	        return !safe ? prev[curr] : prev ? prev[curr] : void 0;
+	    });
+	};
 	
 	var Autocomplete = function Autocomplete(sf, node, options) {
 	    this._construct(sf, node, options);
@@ -132,8 +140,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //if we pass options extend all options by passed options
 	        this.options = (0, _assign2.default)(this.options, options);
 	    }
-	
-	    console.log(this.options);
 	
 	    /*INITIAL VARIABLES*/
 	    /**
@@ -158,6 +164,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.els.wrapper.appendChild(this.els.hidden);
 	    this.els.hidden.setAttribute('type', 'hidden');
 	    this.els.hidden.name = this.els.input.dataset.name;
+	    if (this.els.input.dataset.value) this.els.hidden.value = this.els.input.dataset.value;
 	    this.els.addon.className = "btn-icon";
 	    this.els.addon.setAttribute("type", "button");
 	    this.els.group.appendChild(this.els.addon);
@@ -201,56 +208,59 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    allowNew: {
 	        value: false,
-	        key: "data-allow-new"
+	        domAttr: "data-allow-new"
 	    },
 	    /**
 	     * Name to send <b>Default: "autocomplete"</b>
 	     */
 	    name: {
 	        value: "autocomplete",
-	        key: "data-name"
+	        domAttr: "data-name"
 	    },
 	    /**
 	     * Wrapper selector <b>Default: ".item-form"</b>
 	     */
 	    wrapperSelector: {
 	        value: ".item-form",
-	        key: "data-wrapper-selector"
+	        domAttr: "data-wrapper-selector"
 	    },
 	    /**
 	     * Minum amount of chars to start showing suggestions <b>Default: 1</b>
 	     */
 	    minChars: {
 	        value: 1,
-	        key: "data-min-chars"
+	        domAttr: "data-min-chars"
 	    },
 	    /**
 	     * Naming of query to send <b>Default: "query"</b>
 	     */
 	    query: {
 	        value: "query",
-	        key: "data-query"
+	        domAttr: "data-query"
 	    },
 	    /**
 	     * Defer request after input in ms <b>Default: 500</b>
 	     */
 	    deferRequestBy: {
 	        value: 500,
-	        key: "data-defer"
+	        domAttr: "data-defer"
 	    },
 	    /**
 	     * Class to pass to autocomplete hints <b>Default: "autocomplete-hint"</b>
 	     */
 	    suggestionsClassName: {
 	        value: "autocomplete-hint",
-	        key: "data-suggestions-class"
+	        domAttr: "data-suggestions-class"
 	    },
 	    /**
 	     * Class to pass to selected hint in list <b>Default: "autocomplete-selected"</b>
 	     */
 	    selectedClassName: {
 	        value: "autocomplete-selected",
-	        key: "data-selected-class"
+	        domAttr: "data-selected-class"
+	    },
+	    onSelect: {
+	        domAttr: "data-on-select"
 	    }
 	};
 	/**
@@ -282,24 +292,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	/**
 	 * Adds events listeners.</br>
-	 * input - "keydown"</br>
-	 * input - "change"</br>
-	 * input - "input"</br>
-	 * suggestions - "click"</br>
-	 * addon - "click"</br>
-	 * input - "focus"</br>
-	 * document - "click"
 	 */
 	Autocomplete.prototype.addEventListeners = function () {
 	    var that = this;
 	
 	    function wrap(e) {
 	        if (e.type === 'keydown') that.onKeyPress(e);
-	        if (e.type === 'input' || e.type === 'change') that.onKeyUp(e);
+	        if (e.type === 'input' || e.type === 'change') that.onInputChange(e);
 	        if (e.type === 'click') that.wrap(e);
 	    }
 	
-	    function listen() {
+	    function listen(e) {
+	        if (that.options.availableTags) that.onFocus(e);
 	        that.els.input.addEventListener("keydown", wrap);
 	        that.els.input.addEventListener("change", wrap);
 	        that.els.input.addEventListener("input", wrap);
@@ -331,12 +335,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                break;
 	        }
 	    });
-	
-	    if (this.options.availableTags) {
-	        this.els.input.addEventListener("focus", function () {
-	            that.onFocus();
-	        });
-	    }
 	};
 	
 	/**
@@ -353,7 +351,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @return {String} Key that written in "data-key" attribute
 	 */
 	Autocomplete.prototype.getKeyByIndex = function (index) {
-	    return this.els.hints.children[index].getAttribute("data-key");
+	    return this.els.hints.children[index].dataset.key;
 	};
 	
 	/**
@@ -429,7 +427,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * Process key up.
 	 * @param e Event that fires on key up.
 	 */
-	Autocomplete.prototype.onKeyUp = function (e) {
+	Autocomplete.prototype.onInputChange = function (e) {
 	    var that = this;
 	    if (this.disabled) return;
 	
@@ -465,7 +463,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * Process changing input's value.
 	 */
-	Autocomplete.prototype.onValueChange = function () {
+	Autocomplete.prototype.onValueChange = function (q) {
 	    this.value = this.els.input.value;
 	    if (this.options.availableTags && !this.options.url) {
 	        this.getSuggestions(this.value);
@@ -476,47 +474,54 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	};
 	
+	Autocomplete.prototype.getAvailableSuggestions = function (q) {
+	    if (q.trim() != "") {
+	        var suggestions = {};
+	        for (var key in this.options.availableTags) {
+	            if (this.options.availableTags.hasOwnProperty(key) && this.options.availableTags[key].toLowerCase().indexOf(q.toLowerCase()) != -1) {
+	                suggestions[key] = this.options.availableTags[key];
+	            }
+	        }
+	        this.suggest(suggestions);
+	    } else {
+	        this.suggest(this.options.availableTags);
+	    }
+	};
+	
+	Autocomplete.prototype.getServerSuggestions = function (q) {
+	    var that = this;
+	    if (q.trim() != "") {
+	        if (this.ajax != null) this.ajax[1].abort();
+	        var data = {};
+	        data[that.options.query] = q;
+	        this.ajax = _sf2.default.ajax.send({
+	            url: that.options.url,
+	            data: data,
+	            isReturnXHRToo: true
+	        });
+	        this.ajax[0].then(function (answer) {
+	            if (that.value && !that.filled) that.suggest(answer.suggestions);
+	        }, function (error) {});
+	        this.setState("loading");
+	    } else {
+	        this.hide();
+	    }
+	};
+	
 	/**
 	 * Gets suggestions from availableTags or from server.
 	 * @param {String} q Query
 	 */
 	Autocomplete.prototype.getSuggestions = function (q) {
-	    var that = this;
-	
 	    if (this.options.disable) {
 	        this.setState("add");
 	        return;
 	    }
 	
 	    if (this.options.availableTags && !this.options.url) {
-	        if (q.trim() != "") {
-	            var suggestions = {};
-	            for (var key in this.options.availableTags) {
-	                if (this.options.availableTags.hasOwnProperty(key) && this.options.availableTags[key].toLowerCase().indexOf(q.toLowerCase()) != -1) {
-	                    suggestions[key] = this.options.availableTags[key];
-	                }
-	            }
-	            that.suggest(suggestions);
-	        } else {
-	            that.suggest(this.options.availableTags);
-	        }
+	        this.getAvailableSuggestions(q);
 	    } else {
-	        if (q.trim() != "") {
-	            if (this.ajax != null) this.ajax[1].abort();
-	            var data = {};
-	            data[that.options.query] = q;
-	            this.ajax = _sf2.default.ajax.send({
-	                url: that.options.url,
-	                data: data,
-	                isReturnXHRToo: true
-	            });
-	            this.ajax[0].then(function (answer) {
-	                if (that.value && !that.filled) that.suggest(answer.suggestions);
-	            }, function (error) {});
-	            this.setState("loading");
-	        } else {
-	            this.hide();
-	        }
+	        this.getServerSuggestions(q);
 	    }
 	};
 	
@@ -564,15 +569,28 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.els.group.insertBefore(this.els.hints, this.els.input.nextSibling);
 	    this.visible = true;
 	
-	    this.els.hints.addEventListener("click", function (e) {
-	        //todo implement with removeEventListener
-	        var div = e.target.nodeName === "DIV" ? e.target : e.target.parentNode;
-	        if (div.getAttribute("data-key")) {
-	            that.select(div.getAttribute("data-key"));
-	        }
-	    });
+	    this.els.hints.addEventListener("click", this.onSuggestionsClick.bind(this));
 	
 	    this.setState(this.options.allowNew ? "add" : "select");
+	};
+	
+	Autocomplete.prototype.onSuggestionsClick = function (e) {
+	    e.preventDefault();
+	    var node = e.target;
+	    while (!node.dataset.key && node !== this.els.group) {
+	        node = node.parentNode;
+	    }
+	    if (!node.dataset.key) return;
+	    this.select(node.dataset.key);
+	
+	    // var node = e.target;
+	    // var keys = [];//array, so we can have nesting
+	    // while (node !== this.els.group) {
+	    //     if (node.dataset.key) keys.push(node.dataset.key);
+	    //     node = node.parentNode;
+	    // }
+	    // if (!keys[0]) return;
+	    // this.select.apply(this, keys);
 	};
 	
 	/**
@@ -596,11 +614,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	/**
-	 * Process suggestion select.
-	 * @param {String} key Key that was written in "data-key" attribute in selected suggestion
+	 * @param {String} key
 	 */
 	Autocomplete.prototype.select = function (key) {
 	    this.addTag(key, this.suggestions[key]);
+	    this.onSelect(key);
+	};
+	
+	Autocomplete.prototype.onSelect = function () {
+	    var cb = window[resolveKeyPath(this.options.onSelect, window)];
+	    cb && cb.apply(this, arguments);
 	};
 	
 	//Methods for delimiter
@@ -650,27 +673,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case that.keys.RETURN:
 	            e.stopImmediatePropagation();
 	            e.preventDefault();
-	            if (that.selectedIndex === -1) {
-	                if (!this.options.allowNew && this.value == this.els.input.value) {
-	                    that.onValueChange();
-	                } else {
-	                    that.addTag(false, that.els.input.value);
-	                }
-	                return;
-	            }
-	
-	            that.select(that.getKeyByIndex(that.selectedIndex));
-	            //            if (e.which === that.keys.TAB && that.options.tabDisabled === false) {
-	            //                return;
-	            //            }
+	            that.onKeyEnter();
 	            break;
 	        case that.keys.UP:
 	            if (!that.visible) return;
-	            that.moveUp();
+	            that.onKeyUp();
 	            break;
 	        case that.keys.DOWN:
 	            if (!that.visible) return;
-	            that.moveDown();
+	            that.onKeyDown();
 	            break;
 	        default:
 	            return;
@@ -679,6 +690,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Cancel event if function did not return:
 	    e.stopImmediatePropagation();
 	    e.preventDefault();
+	};
+	
+	Autocomplete.prototype.onKeyEnter = function () {
+	    if (this.selectedIndex === -1) {
+	        if (!this.options.allowNew && this.value == this.els.input.value) {
+	            this.onValueChange();
+	        } else {
+	            this.addTag(false, this.els.input.value);
+	        }
+	        return;
+	    }
+	
+	    this.select(this.getKeyByIndex(this.selectedIndex));
+	};
+	
+	Autocomplete.prototype.onKeyUp = function () {
+	    this.moveUp();
+	};
+	
+	Autocomplete.prototype.onKeyDown = function () {
+	    this.moveDown();
 	};
 	
 	/**
