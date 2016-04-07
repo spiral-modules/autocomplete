@@ -128,6 +128,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        /*NOT REQUIRED OPTIONS*/
 	        /*delimiter: "",*/
 	    };
+	    var that = this;
 	    this.options = (0, _assign2.default)(this.options, defaults);
 	    if (options) {
 	        //if we pass options extend all options by passed options
@@ -168,6 +169,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.value = this.els.input.value;
 	    this.key = this.els.input.dataset.key;
 	
+	    this.retrieveValueByKey();
+	
 	    if (this.key && this.value) {
 	        this.setState("filled");
 	    } else {
@@ -179,6 +182,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    this.addEventListeners();
+	
+	    this.events = new sf.modules.core.Events(["select"]);
 	};
 	
 	Autocomplete.prototype._key = "";
@@ -286,6 +291,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	    }
 	};
+	
+	Autocomplete.prototype.retrieveValueByKey = function () {
+	    var that = this;
+	    if (!this.value && this.els.hidden.value) {
+	        _sf2.default.ajax.send({
+	            url: this.options.url,
+	            data: { id: this.els.hidden.value }
+	        }).then(function (success) {
+	            if (success.suggestions) {
+	                that.els.input.value = success.suggestions[that.els.hidden.value];
+	            } else {
+	                that.els.hidden.value = "";
+	            }
+	        }, function (error) {
+	            that.els.hidden.value = "";
+	        });
+	    }
+	};
+	
 	/**
 	 * Adds events listeners.</br>
 	 */
@@ -618,8 +642,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 	
 	Autocomplete.prototype.onSelect = function () {
+	    this.events.trigger("select", this);
 	    if (!this.options.onSelect) return;
-	    var cb = window[_sf2.default.tools.resolveKeyPath(this.options.onSelect, window)];
+	    var cb = _sf2.default.tools.resolveKeyPath(this.options.onSelect, window);
 	    cb && cb.apply(this, arguments);
 	};
 	
@@ -1135,7 +1160,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	// module
-	exports.push([module.id, ".item-form{position:relative}.item-form,.item-form input[type=text]{font-size:1rem}.item-form input[type=text]:focus+.autocomplete-hints{border-color:#33a3fe;border-top-color:#b9b9b9}.item-state-search .btn-icon:before{content:'\\26B2';transform:rotate(-45deg);display:inline-block}.item-state-add .btn-icon:before{content:'+'}.item-state-filled .btn-icon:before{content:'\\D7'}.item-state-select .btn-icon:hover{opacity:.2;cursor:default}.item-state-select .btn-icon:before{content:'\\21D9'}.item-state-loading .btn-icon:before{content:'\\21BB'}.btn-icon{position:absolute;top:0;right:0;width:30px;font-size:24px}.btn-icon,.btn-icon:before{height:100%;line-height:100%}.btn-icon:before{vertical-align:text-top}.autocomplete-hints{z-index:10000;top:100%;background:#fff;border:1px solid #b9b9b9;border-bottom-left-radius:2px;border-bottom-right-radius:2px;margin-top:-1px;max-width:100%;width:100%;max-height:200px;overflow-y:scroll}.autocomplete-hints>.autocomplete-hint{padding:5px 10px;cursor:pointer}.autocomplete-hints>.autocomplete-hint.autocomplete-selected,.autocomplete-hints>.autocomplete-hint:hover{background:#e5e5e5}.autocomplete-hints strong{color:#33a3fe;font-weight:400}", ""]);
+	exports.push([module.id, ".item-form{position:relative}.item-form,.item-form input[type=text]{font-size:1rem}.item-form input[type=text]:focus+.autocomplete-hints{border-color:#33a3fe;border-top-color:#b9b9b9}.item-state-search .btn-icon:before{content:'\\26B2';transform:rotate(-45deg);display:inline-block;position:relative;bottom:2px}.item-state-add .btn-icon:before{content:'+'}.item-state-filled .btn-icon:before{content:'\\D7'}.item-state-select .btn-icon:hover{opacity:.2;cursor:default}.item-state-select .btn-icon:before{content:'\\21D9'}.item-state-loading .btn-icon:before{content:'\\21BB'}.btn-icon{position:absolute;bottom:3px;right:0;width:30px;font-size:24px;line-height:24px}.autocomplete-hints{z-index:10000;top:100%;background:#fff;border:1px solid #b9b9b9;border-bottom-left-radius:2px;border-bottom-right-radius:2px;margin-top:-1px;max-width:100%;width:100%;max-height:200px;overflow-y:scroll}.autocomplete-hints>.autocomplete-hint{padding:5px 10px;cursor:pointer}.autocomplete-hints>.autocomplete-hint.autocomplete-selected,.autocomplete-hints>.autocomplete-hint:hover{background:#e5e5e5}.autocomplete-hints strong{color:#33a3fe;font-weight:400}", ""]);
 	
 	// exports
 
