@@ -432,8 +432,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (state === "filled") {
 	        this.hide();
 	        this.els.input.readOnly = true;
+	        this.els.input.classList.add('read-only');
 	    } else {
 	        this.els.input.readOnly = false;
+	        this.els.input.classList.remove('read-only');
 	    }
 	};
 	
